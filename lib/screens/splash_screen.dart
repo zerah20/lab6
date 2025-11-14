@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             children: [
               Icon(Icons.medical_services, size: 100, color: Colors.teal),
               SizedBox(height: 20),
-              Text('First Aid Quick Guide', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text('First Aid Quick Guide', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
