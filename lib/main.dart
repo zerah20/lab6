@@ -1,31 +1,73 @@
-// lib/main.dart
-import 'package:first_aid_quick_guide/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'home_screen.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const FirstAidApp());
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class FirstAidApp extends StatelessWidget {
-  const FirstAidApp({Key? key}) : super(key: key);
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+
+    _controller.forward();
+
+    /// FIXED — Safe navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeData(
-      brightness: Brightness.light,
-      primarySwatch: Colors.teal,
-      colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.teal).copyWith(secondary: Colors.amber),
-      useMaterial3: true,
-    );
-
-    return MaterialApp(
-      title: 'First Aid Quick Guide',
-      theme: theme,
-      home: const SplashScreen(),
-
-
+    return Scaffold(
+      body: FadeTransition(
+        opacity: _animation,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.medical_services, size: 300, color: Colors.red),
+              SizedBox(height: 40),
+              Text(
+                'First Aid Quick Guide',
+                style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

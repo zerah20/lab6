@@ -12,6 +12,7 @@ class DetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final created = DateFormat.yMMMMd().add_jm().format(item.createdAt);
     final updated = DateFormat.yMMMMd().add_jm().format(item.updatedAt);
+
     return Scaffold(
       appBar: AppBar(title: Text(item.title)),
       body: Padding(
@@ -19,21 +20,29 @@ class DetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // IMAGE
             if (item.imagePath != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
-                child: Image.file(File(item.imagePath!)),
+                child: Image.file(
+                  File(item.imagePath!),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                ),
               ),
-            Text(item.description, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(item.instructions, style: const TextStyle(fontSize: 16)),
-              ),
+
+            // DESCRIPTION
+            Text(
+              item.description,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 12),
-            Text('Created: $created'),
-            Text('Last updated: $updated'),
+
+            const SizedBox(height: 20),
+
+            // METADATA
+            Text('Created: $created', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('Last updated: $updated', style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
