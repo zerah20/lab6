@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.medical_services, size: 300, color: Colors.teal),
+              Icon(Icons.medical_services, size: 300, color: Colors.red),
               SizedBox(height: 40),
               Text('First Aid Quick Guide', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
             ],
