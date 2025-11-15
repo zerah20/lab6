@@ -1,5 +1,4 @@
 // lib/screens/home_screen.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 import '../models/first_aid.dart';
@@ -28,15 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refreshList() async {
     setState(() => loading = true);
-
-    final allItems = await dbHelper.readAllFirstAids();
-
-    // Apply search manually (mobile & web)
-    items = allItems.where((item) {
-      final text = (item.title + " " + item.description).toLowerCase();
-      return text.contains(searchQuery.toLowerCase());
-    }).toList();
-
+    items = await dbHelper.readAllFirstAids(query: searchQuery);
     setState(() => loading = false);
   }
 
@@ -56,8 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _deleteItem(int id) async {
     await dbHelper.deleteFirstAid(id);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Deleted')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deleted')));
     _refreshList();
   }
 
@@ -66,29 +56,35 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('First Aid Quick Guide'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshList,
+          ),
+        ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(55),
+          preferredSize: const Size.fromHeight(60),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search...',
+                hintText: 'Search title or description',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: searchQuery.isNotEmpty
                     ? IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
-                    setState(() => searchQuery = '');
+                    setState(() {
+                      searchQuery = '';
+                    });
                     _refreshList();
                   },
                 )
                     : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              onChanged: (text) {
-                setState(() => searchQuery = text);
+              onSubmitted: (v) {
+                setState(() => searchQuery = v.trim());
                 _refreshList();
               },
             ),
@@ -98,50 +94,33 @@ class _HomeScreenState extends State<HomeScreen> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : items.isEmpty
-          ? const Center(
-        child: Text(
-          'No first aid topics found.\nTap + to add or check preloaded.json.',
-          textAlign: TextAlign.center,
-        ),
-      )
+          ? const Center(child: Text('No entries yet. Tap + to add a first aid guide.'))
           : RefreshIndicator(
         onRefresh: _refreshList,
         child: ListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 24),
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
             return FirstAidCard(
               item: item,
               onTap: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => DetailScreen(item: item)),
-                );
+                await Navigator.of(context).push(MaterialPageRoute(builder: (_) => DetailScreen(item: item)));
               },
               onEdit: () => _openEdit(item),
               onDelete: () async {
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Delete entry?'),
-                    content:
-                    const Text('This action cannot be undone.'),
+                    title: const Text('Delete?'),
+                    content: const Text('Are you sure you want to delete this guide?'),
                     actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('No'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Yes'),
-                      ),
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes')),
                     ],
                   ),
                 );
-                if (ok == true && item.id != null) {
-                  _deleteItem(item.id!);
-                }
+                if (ok == true) _deleteItem(item.id!);
               },
             );
           },

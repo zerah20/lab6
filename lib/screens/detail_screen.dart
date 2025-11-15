@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/first_aid.dart';
 
+
 class DetailScreen extends StatelessWidget {
   final FirstAid item;
   const DetailScreen({Key? key, required this.item}) : super(key: key);

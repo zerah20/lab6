@@ -1,5 +1,6 @@
-// lib/db/database_helper.dart
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/first_aid.dart';
 
@@ -12,16 +13,19 @@ class DatabaseHelper {
   static const String tableFirstAid = 'first_aid';
   static const String storageBucket = 'first-aid-images';
 
-  /// Uploads a File to Supabase Storage and returns public URL
-  Future<String?> uploadImage(File file, String filePath) async {
+  /// Uploads a File (mobile) or bytes (web) to Supabase Storage and returns public URL
+  Future<String?> uploadImage({File? file, Uint8List? bytes, required String filePath}) async {
     try {
-      // Upload the file to Supabase storage
-      await _supabase.storage.from(storageBucket).upload(filePath, file);
+      if (kIsWeb) {
+        if (bytes == null) return null;
+        await _supabase.storage.from(storageBucket).uploadBinary(filePath, bytes);
+      } else {
+        if (file == null) return null;
+        await _supabase.storage.from(storageBucket).upload(filePath, file);
+      }
 
-      // Get public URL
       final url = _supabase.storage.from(storageBucket).getPublicUrl(filePath);
-
-      return url; // already a String
+      return url;
     } catch (e) {
       print('Supabase upload error: $e');
       return null;
@@ -56,18 +60,6 @@ class DatabaseHelper {
         .order('created_at', ascending: false);
 
     return (res as List).map((e) => FirstAid.fromMap(e)).toList();
-  }
-
-  /// READ ONE BY ID
-  Future<FirstAid?> readFirstAid(int id) async {
-    final res = await _supabase
-        .from(tableFirstAid)
-        .select()
-        .eq('id', id)
-        .maybeSingle();
-
-    if (res == null) return null;
-    return FirstAid.fromMap(res);
   }
 
   /// UPDATE
