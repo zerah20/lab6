@@ -7,8 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:firstaidquickguideapp/main.dart';
+import 'package:first_aid_quick_guide/main.dart';
 
 
 void main() {

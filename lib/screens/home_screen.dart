@@ -2,53 +2,48 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 import '../models/first_aid.dart';
-import '../widget/first_aid_card.dart';
 import 'add_edit_screen.dart';
-import 'detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final dbHelper = DatabaseHelper.instance;
-  List<FirstAid> items = [];
-  bool loading = true;
-  String searchQuery = '';
+class HomeScreenState extends State<HomeScreen> {
+  List<FirstAid> firstAidList = [];
+  final db = DatabaseHelper.instance;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _refreshList();
+    fetchFirstAidItems();
   }
 
-  Future<void> _refreshList() async {
-    setState(() => loading = true);
-    items = await dbHelper.readAllFirstAids(query: searchQuery);
-    setState(() => loading = false);
+  Future<void> fetchFirstAidItems() async {
+    setState(() => isLoading = true);
+    final items = await db.readAllFirstAids();
+    setState(() {
+      firstAidList = items;
+      isLoading = false;
+    });
   }
 
-  Future<void> _openAdd() async {
-    final changed = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AddEditScreen()),
+  void navigateToAddEdit([FirstAid? item]) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddEditScreen(firstAidItem: item),
+      ),
     );
-    if (changed == true) _refreshList();
+    fetchFirstAidItems(); // Refresh list after returning
   }
 
-  Future<void> _openEdit(FirstAid item) async {
-    final changed = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AddEditScreen(existing: item)),
-    );
-    if (changed == true) _refreshList();
-  }
-
-  Future<void> _deleteItem(int id) async {
-    await dbHelper.deleteFirstAid(id);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deleted')));
-    _refreshList();
+  void deleteItem(int id) async {
+    await db.deleteFirstAid(id);
+    fetchFirstAidItems();
   }
 
   @override
@@ -56,78 +51,44 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('First Aid Quick Guide'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshList,
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search title or description',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: searchQuery.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      searchQuery = '';
-                    });
-                    _refreshList();
-                  },
-                )
-                    : null,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onSubmitted: (v) {
-                setState(() => searchQuery = v.trim());
-                _refreshList();
-              },
-            ),
-          ),
-        ),
       ),
-      body: loading
+      body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : items.isEmpty
-          ? const Center(child: Text('No entries yet. Tap + to add a first aid guide.'))
-          : RefreshIndicator(
-        onRefresh: _refreshList,
-        child: ListView.builder(
-          padding: const EdgeInsets.only(bottom: 24),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return FirstAidCard(
-              item: item,
-              onTap: () async {
-                await Navigator.of(context).push(MaterialPageRoute(builder: (_) => DetailScreen(item: item)));
-              },
-              onEdit: () => _openEdit(item),
-              onDelete: () async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Delete?'),
-                    content: const Text('Are you sure you want to delete this guide?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes')),
-                    ],
-                  ),
-                );
-                if (ok == true) _deleteItem(item.id!);
-              },
-            );
-          },
-        ),
+          : firstAidList.isEmpty
+          ? const Center(child: Text('No first aid items yet.'))
+          : ListView.builder(
+        itemCount: firstAidList.length,
+        itemBuilder: (context, index) {
+          final item = firstAidList[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(
+                vertical: 5, horizontal: 10),
+            child: ListTile(
+              leading: item.imagePath != null
+                  ? Image.network(
+                item.imagePath!,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+              )
+                  : const Icon(Icons.medical_services),
+              title: Text(item.title),
+              subtitle: Text(
+                item.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => navigateToAddEdit(item),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => deleteItem(item.id!),
+              ),
+            ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _openAdd,
+        onPressed: () => navigateToAddEdit(),
         child: const Icon(Icons.add),
       ),
     );

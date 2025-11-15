@@ -1,116 +1,100 @@
-// lib/db/database_helper.dart
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
 import '../models/first_aid.dart';
 import '../db/database_helper.dart';
 
-class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
-  DatabaseHelper._init();
+class AddEditScreen extends StatefulWidget {
+  final FirstAid? firstAidItem; // <--- Add this
 
-  final SupabaseClient _supabase = Supabase.instance.client;
+  const AddEditScreen({Key? key, this.firstAidItem}) : super(key: key); // <--- Add this
 
-  static const String tableFirstAid = 'first_aid';
-  static const String storageBucket = 'first-aid-images';
+  @override
+  _AddEditScreenState createState() => _AddEditScreenState();
+}
 
-  /// ─── UPLOAD IMAGE ─────────────────────────────
-  /// Accepts mobile File or web Uint8List
-  Future<String?> uploadImage({
-    File? file,
-    Uint8List? bytes,
-    required String filePath,
-  }) async {
-    try {
-      final bucket = _supabase.storage.from(storageBucket);
+class _AddEditScreenState extends State<AddEditScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController titleController;
+  late TextEditingController descriptionController;
+  late TextEditingController instructionsController;
 
-      if (kIsWeb) {
-        if (bytes == null) return null;
-        await bucket.uploadBinary(filePath, bytes);
+  final db = DatabaseHelper.instance;
+
+  @override
+  void initState() {
+    super.initState();
+
+    titleController = TextEditingController(
+        text: widget.firstAidItem?.title ?? '');
+    descriptionController = TextEditingController(
+        text: widget.firstAidItem?.description ?? '');
+    instructionsController = TextEditingController(
+        text: widget.firstAidItem?.instructions ?? '');
+  }
+
+  void saveItem() async {
+    if (_formKey.currentState!.validate()) {
+      final item = FirstAid(
+        id: widget.firstAidItem?.id,
+        title: titleController.text,
+        description: descriptionController.text,
+        instructions: instructionsController.text,
+        imagePath: widget.firstAidItem?.imagePath,
+        createdAt: widget.firstAidItem?.createdAt,
+        updatedAt: DateTime.now(),
+      );
+
+      if (widget.firstAidItem == null) {
+        await db.createFirstAid(item);
       } else {
-        if (file == null) return null;
-        await bucket.upload(filePath, file);
+        await db.updateFirstAid(item);
       }
 
-      final url = bucket.getPublicUrl(filePath);
-      return url; // returns String
-    } catch (e) {
-      print('Upload error: $e');
-      return null;
+      Navigator.pop(context); // Go back to HomeScreen
     }
   }
 
-  /// ─── CREATE ─────────────────────────────
-  Future<FirstAid> createFirstAid(FirstAid item) async {
-    final now = DateTime.now().toIso8601String();
-
-    final response = await _supabase
-        .from(tableFirstAid)
-        .insert({
-      'title': item.title,
-      'description': item.description,
-      'instructions': item.instructions,
-      'image_path': item.imagePath,
-      'created_at': now,
-      'updated_at': now,
-    })
-        .select()
-        .single();
-
-    return FirstAid.fromMap(response);
-  }
-
-  /// ─── READ ALL ─────────────────────────────
-  Future<List<FirstAid>> readAllFirstAids() async {
-    final res = await _supabase
-        .from(tableFirstAid)
-        .select()
-        .order('created_at', ascending: false);
-
-    return (res as List).map((e) => FirstAid.fromMap(e)).toList();
-  }
-
-  /// ─── READ ONE BY ID ─────────────────────────────
-  Future<FirstAid?> readFirstAid(int id) async {
-    final res = await _supabase
-        .from(tableFirstAid)
-        .select()
-        .eq('id', id)
-        .maybeSingle();
-
-    if (res == null) return null;
-    return FirstAid.fromMap(res);
-  }
-
-  /// ─── UPDATE ─────────────────────────────
-  Future<int> updateFirstAid(FirstAid item) async {
-    item.updatedAt = DateTime.now();
-
-    try {
-      await _supabase.from(tableFirstAid).update({
-        'title': item.title,
-        'description': item.description,
-        'instructions': item.instructions,
-        'image_path': item.imagePath,
-        'updated_at': item.updatedAt.toIso8601String(),
-      }).eq('id', item.id);
-
-      return 1;
-    } catch (e) {
-      print('Supabase update error: $e');
-      return 0;
-    }
-  }
-
-  /// ─── DELETE ─────────────────────────────
-  Future<int> deleteFirstAid(int id) async {
-    try {
-      await _supabase.from(tableFirstAid).delete().eq('id', id);
-      return 1;
-    } catch (e) {
-      print('Supabase delete error: $e');
-      return 0;
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.firstAidItem == null ? 'Add First Aid' : 'Edit First Aid'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Enter title' : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Enter description' : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: instructionsController,
+                decoration: const InputDecoration(labelText: 'Instructions'),
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Enter instructions' : null,
+                maxLines: 5,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: saveItem,
+                child: Text(widget.firstAidItem == null ? 'Add' : 'Update'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/first_aid.dart';
-import 'package:first_aid_quick_guide/main.dart';
 
 
 class FirstAidCard extends StatelessWidget {

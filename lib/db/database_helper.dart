@@ -1,6 +1,5 @@
-import 'dart:io';
+// lib/db/database_helper.dart
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/first_aid.dart';
 
@@ -13,19 +12,15 @@ class DatabaseHelper {
   static const String tableFirstAid = 'first_aid';
   static const String storageBucket = 'first-aid-images';
 
-  /// Uploads a File (mobile) or bytes (web) to Supabase Storage and returns public URL
-  Future<String?> uploadImage({File? file, Uint8List? bytes, required String filePath}) async {
+  /// Uploads an image to Supabase Storage (Web only)
+  Future<String?> uploadImage({
+    required Uint8List bytes,
+    required String filePath,
+  }) async {
     try {
-      if (kIsWeb) {
-        if (bytes == null) return null;
-        await _supabase.storage.from(storageBucket).uploadBinary(filePath, bytes);
-      } else {
-        if (file == null) return null;
-        await _supabase.storage.from(storageBucket).upload(filePath, file);
-      }
-
-      final url = _supabase.storage.from(storageBucket).getPublicUrl(filePath);
-      return url;
+      await _supabase.storage.from(storageBucket).uploadBinary(filePath, bytes);
+      // Return public URL
+      return _supabase.storage.from(storageBucket).getPublicUrl(filePath);
     } catch (e) {
       print('Supabase upload error: $e');
       return null;

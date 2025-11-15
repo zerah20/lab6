@@ -1,5 +1,6 @@
+// lib/screens/splash_screen.dart
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'home_screen.dart'; // Ensure this file exists in the same folder
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -10,14 +11,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
 
+    // Animation setup
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -30,10 +31,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // SAFE NAVIGATION
+    // Navigate to HomeScreen after delay
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -55,12 +55,20 @@ class _SplashScreenState extends State<SplashScreen>
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.medical_services, size: 300, color: Colors.red),
-              const SizedBox(height: 40),
-              const Text(
+            children: const [
+              Icon(
+                Icons.medical_services,
+                size: 200,
+                color: Colors.red,
+              ),
+              SizedBox(height: 40),
+              Text(
                 'First Aid Quick Guide',
-                style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
