@@ -1,39 +1,31 @@
-// lib/screens/splash_screen.dart
 import 'package:flutter/material.dart';
-import 'home_screen.dart'; // Ensure this file exists in the same folder
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
+class _SplashScreenState extends State<SplashScreen> {
+  double _opacity = 0.0;
+  double _scale = 0.5;
 
   @override
   void initState() {
     super.initState();
 
-    // Animation setup
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    );
+    // Start fade and scale animation after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _opacity = 1.0;
+        _scale = 1.0;
+      });
+    });
 
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-
-    _controller.forward();
-
-    // Navigate to HomeScreen after delay
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
+    // After 2 seconds, navigate to home screen
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -42,36 +34,32 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FadeTransition(
-        opacity: _animation,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(
-                Icons.medical_services,
-                size: 200,
-                color: Colors.red,
-              ),
-              SizedBox(height: 40),
-              Text(
-                'First Aid Quick Guide',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 1500),
+              opacity: _opacity,
+              child: AnimatedScale(
+                scale: _scale,
+                duration: const Duration(milliseconds: 1500),
+                child: Image.asset(
+                  'lib/assets/icon/app_icon.jpg',
+                  width: 200,  // made larger
+                  height: 200,
+                  fit: BoxFit.contain,
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "First Aid Quick Guide",
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+          ],
         ),
       ),
     );
