@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../controller/firts_aid_controller.dart';
 import '../models/first_aid_case.dart';
 import '../services/supabase_service.dart';
-import '../screens/first_aid_edit_screen.dart';
+import '../screens/firts_aid_detail_screen.dart';
 
 class FirstAidCase {
   final String id;

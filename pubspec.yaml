@@ -11,14 +11,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  supabase_flutter: ^1.0.0
-  image_picker: ^0.8.7+5
-  intl: ^0.19.0
+
+  # Updated Supabase to latest stable — fixes the Android build issue
+  supabase_flutter: ^2.10.3
+
+  # Updated image_picker to latest stable version
+  image_picker: ^1.2.1
+
+  # Updated intl to latest compatible version
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
