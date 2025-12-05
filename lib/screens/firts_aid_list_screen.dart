@@ -95,7 +95,7 @@ class _FirstAidListScreenState extends State<FirstAidListScreen> {
                       child: const Icon(
                         Icons.medical_information,
                         size: 40,
-                        color: Colors.blue,
+                        color: Colors.white,
                       ),
                     ),
                   ),
